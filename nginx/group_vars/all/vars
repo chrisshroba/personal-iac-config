@@ -1,0 +1,1 @@
+shrobaserver_chris_password: "{{ vault_shrobaserver_chris_password }}"

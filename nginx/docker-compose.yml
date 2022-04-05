@@ -1,0 +1,9 @@
+version: '3.1'
+
+services:
+  nginx:
+    network_mode: host
+    image: nginx
+    volumes:
+    - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+    - ./configs/conf.d/:/etc/nginx/conf.d/:ro

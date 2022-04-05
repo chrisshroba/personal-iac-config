@@ -1,0 +1,54 @@
+- name: Deploy nginx to shrobaserver using docker.
+  hosts: shrobaserver
+  become: yes
+  vars:
+    deploy_to_dir: "/root/ansible-deployed/nginx/"
+    docker_compose_project_name: "global_nginx"
+  tasks:
+    # Doesn't work with sudo because of https://www.reddit.com/r/ansible/comments/f06lgn/comment/fgrzcm0
+    # - name: Transfer nginx configs to shrobaserver
+    #   ansible.posix.synchronize:
+    #     src: mounts/
+    #     dest: "{{ deploy_to_dir }}/configs"
+    #     delete: yes
+    #     recursive: yes
+    - name: "Remove directory to deploy to, to wipe existing state"
+      file:
+        path: "{{ deploy_to_dir }}/configs"
+        state: absent
+
+    - name: Create directory to deploy to if not exists
+      file:
+        path: "{{ deploy_to_dir }}/configs"
+        state: directory
+    - name: Copy postgres config and docker-compose.yml to server
+      ansible.builtin.copy:
+        src: "mounts/"
+        dest: "{{ deploy_to_dir }}/configs"
+    - name: Transfer docker-compose
+      ansible.builtin.copy:
+        src: ./docker-compose.yml
+        dest: "{{ deploy_to_dir }}"
+    - name: Tear down any existing services
+      community.docker.docker_compose:
+        project_name: "{{ docker_compose_project_name }}"
+        project_src: "{{ deploy_to_dir }}"
+        remove_orphans: yes
+        state: absent
+    - name: Bring up postgres and pgweb.
+      community.docker.docker_compose:
+        project_name: "{{ docker_compose_project_name }}"
+        project_src: "{{ deploy_to_dir }}"
+        remove_orphans: yes
+      register: output
+
+    - ansible.builtin.assert:
+        that:
+          - "output.services.nginx.{{ docker_compose_project_name }}_nginx_1.state.running"
+
+    - name: Check that shroba.io responds with valid HTML
+      uri:
+        url: http://shroba.io
+        return_content: yes
+      register: output
+      failed_when: "'nginx web server is successfully installed' not in output.content"
