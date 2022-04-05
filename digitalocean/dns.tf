@@ -30,3 +30,10 @@ resource "digitalocean_record" "shroba_io_root_A_record" {
   name = "@"
   value = digitalocean_droplet.shrobaserver.ipv4_address
 }
+
+resource "digitalocean_record" "tinyhealthcheck_shroba_io_subdomain_A_record" {
+  domain = digitalocean_domain.shroba_io.name
+  type = "A"
+  name = "tinyhealthcheck"
+  value = digitalocean_droplet.shrobaserver.ipv4_address
+}
