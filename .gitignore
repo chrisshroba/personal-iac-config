@@ -42,5 +42,6 @@ terraform.rc
 
 env.sh
 .ansible_vault_password
+**/vault
 
 .python-version
